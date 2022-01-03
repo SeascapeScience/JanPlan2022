@@ -1,0 +1,174 @@
+---
+title: "Exploring the HAB Index"
+author: "Johnathan Evanilla"
+date: "1/3/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction - Loading and Visualizing Data in Kaggle
+
+In this tutorial, we will explore a timeseries called the "HAB Index," which combines three components of seasonal Paralytic Shellfish Poison (PSP) outbreaks in coastal Maine.
+
+This lab serves as an introduction to working in the Kaggle environment, data organization, visualization, and interpretation that you will conduct throughout the course. You can use the exercises here as a template for your future analyses.
+
+For this course, we will be running R notebooks in Kaggle. These notebooks can also be run on your computer in R or R-studio. For reference, here are notes on installing R and R-studio.
+
+Install R program at: http://cran.rstudio.com/ This site has options for download for Linux, Mac, and Windows
+
+Install R-studio (R interface) http://www.rstudio.com/products/rstudio/download/ Under “installers” you should see options for Mac and Windows.
+
+**Libraries / Packages**
+
+R notebooks begin by loading in any libraries/packages that will be used. Here we are loading in libraries used for reading in data, manipulating data, and plotting/visualizing data.
+
+If you are running R on your computer, you'll first need to install each package with the install.packages() function.
+
+
+```{r packages}
+library(readr)
+library(dplyr)
+library(ggplot2)
+```
+
+**Data Organization**
+
+Good data organization and formatting is the foundation for your research project. Data files stored in proprietary formats, like excel spreadsheets, have readability and transferrability problems. Storing data in a universal, open, and machine-readable format will avoid problems. The most general format is a .csv format (comma separated values), in a columnar table format.
+
+Below is an example of a problematic spreadsheet. Some of the issues:
+
+* Multiple tables.
+* Not filling in zeros or null values.
+* Formatting to convey information.
+* Merging cells.
+* Problematic field names.
+* Metadata in data table. This table would not be read in in a consistent way when coding.
+
+
+# Read HAB Index Data File
+
+First, we can read in a csv file containing the HAB Indices from 1975 through 2021. A HAB Index is computed for Western and Eastern Maine coastal regions each year, split by Penobscot Bay. There are three components used to find the HAB Index:
+* Percent Toxic Stations - The percent of PSP sampling stations throughout the region that have at least one sample >40 (units) throughout the season.
+* Normalized Cummulative Toxicity - The sum of all toxicity scores from the region divided by the number of stations samples.
+* Duration of Toxic Season - The number of days between the first and last sample >40 (units) throughout the region.
+
+```{r read_hab, echo=FALSE}
+hab <- readr::read_csv("~/Documents/Bigelow/CODE/JanPlan2022/input/hab_index_1975_2021.csv")
+
+glimpse(hab)
+
+summary(hab)
+```
+
+
+# Tidyverse Data Manipulation
+
+* %>%
+* filter()
+* select()
+* mutate()
+
+
+```{r filter}
+hab %>% filter(year > 1999)
+
+```
+
+
+```{r select}
+hab %>% 
+    filter(year > 1999) %>% 
+    select(year, hab_index_west, hab_index_east)
+
+```
+
+
+```{r mutate}
+hab %>% 
+    filter(year > 1999) %>% 
+    select(year, hab_index_west, hab_index_east) %>%
+    mutate(total_hab = hab_index_west+hab_index_east)
+
+```
+
+# Plot the HAB Index Timeseries (Western Maine)
+
+```{r hab_index_west}
+
+hab_index_west <- ggplot2::ggplot(data=hab, ggplot2::aes(x=.data$year, y=.data$hab_index_west)) +
+  ggplot2::geom_point() +
+  ggplot2::geom_line()
+
+hab_index_west
+```
+
+
+
+# Plot the HAB Index Timeseries (Eastern Maine)
+
+```{r hab_index_east}
+hab_index_east <- ggplot2::ggplot(data=hab, ggplot2::aes(x=.data$year, y=.data$hab_index_east)) +
+  ggplot2::geom_point() +
+  ggplot2::geom_line()
+
+hab_index_east
+```
+
+
+
+# Plot Percent Toxic Stations
+
+```{r percent_toxic}
+
+percent_toxic_stations <- ggplot2::ggplot() +
+  ggplot2::geom_point(data = hab, ggplot2::aes(x = .data$year, y=.data$per_toxic_stations_west), shape=16) +
+  ggplot2::geom_line(data = hab, ggplot2::aes(x = .data$year, y=.data$per_toxic_stations_west)) +
+  ggplot2::geom_point(data = hab, ggplot2::aes(x = .data$year, y=.data$per_toxic_stations_east), shape=2) +
+  ggplot2::geom_line(data = hab, ggplot2::aes(x = .data$year, y=.data$per_toxic_stations_east), linetype="dashed") +
+  ggplot2::labs(x = "Year",
+                y = "% Toxic Stations")
+  
+percent_toxic_stations
+```
+
+
+# Plot Normalized Cummulative Toxicity
+
+```{r cummulative_toxicity}
+
+cummulative_toxicity <- ggplot2::ggplot() +
+  ggplot2::geom_point(data = hab, ggplot2::aes(x = .data$year, y=.data$norm_tox_west), shape=16) +
+  ggplot2::geom_line(data = hab, ggplot2::aes(x = .data$year, y=.data$norm_tox_west)) +
+  ggplot2::geom_point(data = hab, ggplot2::aes(x = .data$year, y=.data$norm_tox_east), shape=2) +
+  ggplot2::geom_line(data = hab, ggplot2::aes(x = .data$year, y=.data$norm_tox_east), linetype="dashed") +
+  ggplot2::labs(x = "Year",
+                y = "Cumulative Toxicity per Station")
+
+cummulative_toxicity
+
+```
+
+
+# Plot the Duration of Toxicity Seasons
+
+
+```{r toxic_duration}
+
+toxic_duration <- ggplot2::ggplot() +
+  ggplot2::geom_point(data = hab, ggplot2::aes(x = .data$year, y=.data$duration_west), shape=16) +
+  ggplot2::geom_line(data = hab, ggplot2::aes(x = .data$year, y=.data$duration_west)) +
+  ggplot2::geom_point(data = hab, ggplot2::aes(x = .data$year, y=.data$duration_east), shape=2) +
+  ggplot2::geom_line(data = hab, ggplot2::aes(x = .data$year, y=.data$duration_east), linetype="dashed") +
+  ggplot2::labs(x = "Year",
+                y = "Duration (days)")
+
+toxic_duration
+```
+
+
+
+
+
