@@ -55,6 +55,15 @@ First, we can read in a csv file containing the HAB Indices from 1975 through 20
 * Normalized Cummulative Toxicity - The sum of all toxicity scores from the region divided by the number of stations samples.
 * Duration of Toxic Season - The number of days between the first and last sample >40 (units) throughout the region.
 
+| Bin # | % of toxic STATIONS | Cummulative Toxicity | Duration of toxicity |
+| ----- | ------------------- | -------------------- | -------------------- |
+|   1   |     0-20            |       0-500          |         0-50         | 
+|   2   |     21-40           |      501-1000        |        51-100        |
+|   3   |     41-60           |      1001-1500       |        101-150       |
+|   4   |     61-80           |      1501-2000       |        151-200       |
+|   5   |     81-100          |       >2000          |         >200         |
+
+
 ```{r read_hab, echo=FALSE}
 hab <- readr::read_csv("~/Documents/Bigelow/CODE/JanPlan2022/input/hab_index_1975_2021.csv")
 
@@ -93,6 +102,19 @@ hab %>%
     mutate(total_hab = hab_index_west+hab_index_east)
 
 ```
+
+# Plotting tools in R
+Now we will plot some of the data in the HAB index file. One common package for making figures in R is ggplot, though there are many other tools, packages, and softwares for doing this.
+
+Here is a list of functions that can be used with ggplot() that can be found in these resources, with series of plotting examples you can run:
+
+https://ggplot2.tidyverse.org/reference/index.html
+
+Cheatsheet for ggplot:
+
+https://www.rstudio.com/wp-content/uploads/2015/03/ggplot2-cheatsheet.pdf
+
+
 
 # Plot the HAB Index Timeseries (Western Maine)
 
@@ -170,5 +192,20 @@ toxic_duration
 
 
 
+Assignment
+Locate and download an ocean time series that is of interest to you. The idea is to start thinking about something you'd like to use for your ocean forecasting project. Walk through the steps above to do some time series plotting of your dataset. You'll have to put the data into a column .csv file and upload to your Kaggle environment.
+
+The goals of this assignment are
+
+* Get a little more comfortable working in R in Kaggle and working with data
+* Get started finding and working with data for use in your final forecasting project
+
+Some possible places to find data:
+
+* Ocean ecosystem indicators https://noaa-edab.github.io/tech-doc/
+* Global fish stock time series http://www.seaaroundus.org
+* Maine landings data https://www.maine.gov/dmr/commercial-fishing/landings/historical-data.html
+* NOAA climate indices https://psl.noaa.gov/data/climateindices/list/
+* Satellite ocean data https://oceancolor.gsfc.nasa.gov/
 
 
