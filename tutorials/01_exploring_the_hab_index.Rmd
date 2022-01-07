@@ -64,7 +64,7 @@ First, we can read in a csv file containing the HAB Indices from 1975 through 20
 |   5   |     81-100          |       >2000          |         >200         |
 
 
-```{r read_hab, echo=FALSE}
+```{r read_hab}
 hab <- readr::read_csv("~/Documents/Bigelow/CODE/JanPlan2022/input/hab_index_1975_2021.csv")
 
 glimpse(hab)

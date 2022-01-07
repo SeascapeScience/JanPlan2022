@@ -1,0 +1,147 @@
+---
+title: "Basic Time Series Forecasting"
+author: "Johnathan Evanilla"
+date: "1/5/2022"
+output: html_document
+---
+
+```{r packages}
+
+library(readr)
+library(dplyr)
+library(tidyr)
+library(fpp3)
+
+```
+
+
+
+
+
+```{r load_data}
+
+hab <- readr::read_csv("~/Documents/Bigelow/CODE/JanPlan2022/input/combined_hab_predictors.csv.gz")
+
+hab_ts <- hab %>% 
+  as_tsibble(index=year)
+
+str(hab)
+
+str(hab_ts)
+
+```
+
+
+
+
+
+```{r amo_gsi}
+
+amo_wide <- read_csv("~/Documents/Bigelow/CODE/JanPlan2022/input/amo_1856_2021.csv.gz")
+
+amo_wide
+
+```
+
+
+```{r}
+amo <- amo_wide %>%
+  pivot_longer(all_of(month.abb), 
+               names_to = "Month",
+               values_to = "AMO") %>% 
+  mutate(year_month = paste(Year, Month, sep=" "))
+
+amo
+
+```
+
+
+```{r prep_ts}
+
+amo_ts <- amo %>% 
+  mutate(ym = yearmonth(year_month)) %>% 
+  as_tsibble(index=ym)
+
+amo_ts
+
+```
+
+
+```{r plot_ts}
+amo_ts %>% 
+  autoplot(AMO, level=NULL)
+
+```
+
+```{r}
+tail(amo_ts)
+
+```
+
+```{r}
+
+amo_ts <- amo_ts %>% 
+  filter(ym < yearmonth('2021 Dec'))
+
+amo_ts %>% autoplot(AMO)
+
+```
+
+
+```{r gg_season}
+amo_ts %>% 
+  filter(Year > 2000) %>% 
+  gg_season(AMO, labels="both")
+
+
+```
+
+```{r gg_season}
+amo_ts %>% 
+  filter(ym < yearmonth('2021 Dec')) %>% 
+  gg_subseries(AMO)
+
+```
+
+```{r fit_model}
+
+fit <- amo_ts %>% 
+  model(trend_model = TSLM(AMO ~ trend()))
+
+fit
+
+```
+
+
+```{r forecast_fit}
+fit %>% 
+  forecast(h=40) %>% 
+  autoplot(amo_ts)
+
+```
+
+
+```{r forecast}
+
+forecast <- amo_ts %>% 
+  model(mean = MEAN(AMO),
+        naive = NAIVE(AMO),
+        snaive = SNAIVE(AMO),
+        trend_model = TSLM(AMO ~ trend()),
+        drift = NAIVE(AMO ~ drift())) %>% 
+  forecast(h=40)
+
+forecast
+
+str(forecast)
+
+```
+
+
+```{r plot_forecast}
+amo_ts %>% 
+  filter(Year > 2010) %>% 
+  autoplot(.vars=c(AMO), level=NULL) +
+  autolayer(forecast)
+
+```
