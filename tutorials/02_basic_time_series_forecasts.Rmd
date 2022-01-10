@@ -145,3 +145,17 @@ amo_ts %>%
   autolayer(forecast)
 
 ```
+
+
+
+## Assignmnent
+
+Start building a Kaggle notebook that describes your time series data, provides some basic plots of the time series, and runs through the forecasting steps in the notebook above. Think of this as the starting point for your forecasting project document.
+
+Questions:
+
+1. Pick a point part way through the time series. If the time series ended there, and you were to forecast the next time point, how close would each method come?
+
+2. Choose another point part way through the time series and run the same test.
+
+3. Which of the forecasting methods that we've used so far is the best method and why?
