@@ -1,0 +1,290 @@
+---
+title: "Linear Regression Models"
+author: "Johnathan Evanilla"
+date: "1/11/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r}
+library(dplyr)
+library(readr)
+library(fpp3)
+library(ggplot2)
+library(GGally)
+
+```
+
+```{r}
+hab <- readr::read_csv("~/Documents/Bigelow/CODE/JanPlan2022/input/combined_hab_predictors.csv.gz") %>%
+    as_tsibble(index=year)
+
+hab
+
+```
+
+
+```{r}
+hab %>% 
+    pivot_longer(-year) %>%
+    ggplot(aes(year, value, color=name)) +
+    geom_line() +
+    facet_grid(name ~ ., scales = "free_y") +
+    guides(colour = "none")
+
+```
+
+
+## NAO
+
+```{r}
+hab %>% 
+  ggplot(aes(x=nao, y=hab_index_west)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+
+```
+
+
+```{r}
+hab %>% 
+    model(TSLM(hab_index_west ~ nao)) %>%
+    report()
+```
+
+
+## GSI
+
+
+```{r}
+hab %>% 
+  ggplot(aes(x=gsi, y=hab_index_west)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+
+```
+
+
+```{r}
+hab %>% 
+    model(TSLM(hab_index_west ~ gsi)) %>%
+    report()
+
+```
+
+
+## AMO
+
+
+```{r}
+hab %>% 
+  ggplot(aes(x=amo, y=hab_index_west)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+
+```
+
+
+```{r}
+hab %>% 
+    model(TSLM(hab_index_west ~ amo)) %>%
+    report()
+
+```
+
+
+
+
+
+```{r}
+hab %>% 
+  GGally::ggpairs(columns = 1:6)
+
+```
+
+
+```{r}
+hab %>% 
+  ggcorr()
+```
+
+
+```{r}
+fit_hab_i <- hab %>%
+    model(tslm = TSLM(hab_index_west~amo + nao + gsi)) %>%
+    report()
+
+```
+
+
+```{r}
+augment(fit_hab_i) %>%
+  ggplot(aes(x = year)) +
+  geom_line(aes(y = hab_index_west, colour = "Data")) +
+  geom_line(aes(y = .fitted, colour = "Fitted")) +
+  labs(y = NULL,
+       title = "Western Coastal Maine HAB Index") +
+  scale_colour_manual(values=c(Data="black",Fitted="#D55E00")) +
+  guides(colour = guide_legend(title = NULL))
+
+```
+
+
+```{r}
+augment(fit_hab_i) %>%
+  ggplot(aes(x = hab_index_west, y = .fitted)) +
+  geom_point() +
+  labs(y = "Fitted (predicted values)",
+       x = "Data (actual values)",
+       title = "Coastal Maine HAB Index") +
+  geom_abline(intercept = 0, slope = 1)
+
+```
+
+
+```{r}
+fit_hab_i %>% 
+  gg_tsresiduals()
+
+```
+
+
+```{r}
+hab %>%
+  left_join(residuals(fit_hab_i), by = "year") %>%
+  pivot_longer(nao:gsi,
+               names_to = "regressor", values_to = "x") %>%
+  ggplot(aes(x = x, y = .resid)) +
+  geom_point() +
+  facet_wrap(. ~ regressor, scales = "free_x") +
+  labs(y = "Residuals", x = "")
+
+```
+
+
+## Try the same method with predictors offset by 1 year
+
+
+```{r}
+
+offset_hab <- readr::read_csv("~/Documents/Bigelow/CODE/JanPlan2022/input/combined_hab_offset_predictors_1976_2020.csv.gz") %>% 
+  as_tsibble(index=year)
+
+offset_hab
+
+```
+
+
+```{r}
+offset_hab %>% 
+  ggpairs(columns = 1:6)
+```
+
+```{r}
+offset_hab %>% 
+  ggcorr()
+```
+
+```{r}
+hab %>% 
+  ggcorr()
+```
+
+```{r}
+
+fit_offset_hab_i <- offset_hab %>%
+    model(tslm = TSLM(hab_index_west~amo + nao + gsi)) %>%
+    report()
+
+```
+
+
+
+```{r}
+augment(fit_offset_hab_i) %>%
+  ggplot(aes(x = year)) +
+  geom_line(aes(y = hab_index_west, colour = "Data")) +
+  geom_line(aes(y = .fitted, colour = "Fitted")) +
+  labs(y = NULL,
+       title = "Western Coastal Maine HAB Index") +
+  scale_colour_manual(values=c(Data="black",Fitted="#D55E00")) +
+  guides(colour = guide_legend(title = NULL))
+```
+
+
+## Try using only January, Febuary, March indices prior to the season
+
+
+```{r}
+hab_jfm <- readr::read_csv("~/Documents/Bigelow/CODE/JanPlan2022/input/hab_index_w_jfm_1975_2020.csv.gz") %>% 
+  as_tsibble(index=year)
+
+hab_jfm
+```
+
+
+```{r}
+hab_jfm %>% 
+  ggpairs(columns = 1:12)
+```
+
+```{r}
+hab_jfm %>% 
+  ggcorr()
+```
+
+
+```{r}
+fit_jfm_hab_i <- hab_jfm %>%
+    model(tslm = TSLM(hab_index_west~amo_j+amo_f+amo_m+nao_j+nao_f+nao_m+gsi_j+gsi_f+gsi_m)) %>%
+    report()
+
+```
+
+```{r}
+augment(fit_jfm_hab_i) %>%
+  ggplot(aes(x = year)) +
+  geom_line(aes(y = hab_index_west, colour = "Data")) +
+  geom_line(aes(y = .fitted, colour = "Fitted")) +
+  labs(y = NULL,
+       title = "Western Coastal Maine HAB Index") +
+  scale_colour_manual(values=c(Data="black",Fitted="#D55E00")) +
+  guides(colour = guide_legend(title = NULL))
+
+```
+
+
+```{r}
+augment(fit_jfm_hab_i) %>%
+  ggplot(aes(x = hab_index_west, y = .fitted)) +
+  geom_point() +
+  labs(y = "Fitted (predicted values)",
+       x = "Data (actual values)",
+       title = "Coastal Maine HAB Index") +
+  geom_abline(intercept = 0, slope = 1)
+
+```
+
+
+## Assignmnent
+
+Building on your Kaggle notebook that describes your time series data, add some new forecasting tests using the linear regression method. You can use the climate indices provided as covariates, but you might also need to bring in other covariate time series. You can find more date here:
+
+https://psl.noaa.gov/data/climateindices/list/
+
+These data can be saved as .csv files and imported into your notebook.
+
+Questions:
+
+* Which indices/covariates have the best predictive power for your time series?
+
+* How does the predictive ability change with the forecast horizon?
+
+* Start to write a description of how your forecast could be used to inform decision making. What decision could be improved by the forecast? Who would the forecast users be? And given the uncertainty in your forecast so far, how could the forecast be used / misused to make these decisions? Think of this writing exercise as informing your forecasting project. Support your answers with references (does not need to be limited to primary literature).
+
+
