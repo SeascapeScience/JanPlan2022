@@ -1,0 +1,141 @@
+---
+title: "machine learning forecasting"
+author: "Johnathan Evanilla"
+date: "1/18/2022"
+output: html_document
+---
+
+
+
+```{r}
+library(dplyr)
+library(readr)
+library(fpp3)
+library(keras)
+```
+
+
+```{r}
+hab_w_predictors <- read_csv("~/Documents/Bigelow/CODE/JanPlan2022/input/hab_index_w_jfm_1975_2020.csv.gz")
+
+hab_w_predictors
+```
+
+```{r}
+train <- hab_w_predictors %>% 
+  filter(year < 2010)
+
+test <- hab_w_predictors %>% 
+  filter(year >= 2010)
+
+
+```
+
+
+
+
+## Split data by features and labels
+
+```{r}
+train_x <- train %>% 
+  select(-year, -hab_index_west, -hab_index_east) %>% 
+  as.matrix()
+
+train_y <- train %>% 
+  select(hab_index_west) %>% 
+  as.matrix()
+
+train_x
+train_y
+ 
+```
+
+
+
+```{r}
+test_x <- test %>% 
+  select(-year, -hab_index_west, -hab_index_east) %>% 
+  as.matrix()
+
+test_y <- test %>% 
+  select(hab_index_west) %>% 
+  as.matrix()
+
+```
+
+
+## Build the model
+
+```{r}
+model <- keras_model_sequential() %>% 
+  layer_dense(units = 16,
+                     activation = "relu",
+                     input_shape = dim(train_x)[2]) %>% 
+  layer_dropout(rate = 0.2) %>% 
+  layer_dense(units = 16,
+                     activation = "relu") %>% 
+  layer_dropout(rate = 0.2) %>% 
+  layer_dense(units = 1)
+```
+
+
+
+## Compile the model
+
+```{r}
+model %>% 
+  compile(optimizer = "rmsprop",
+          loss = "mae",
+          metric = "mae")
+```
+
+
+## Fit the model to training data
+
+```{r}
+model %>% 
+  fit(x = train_x,
+      y = train_y,
+      epochs = 15,
+      batch_size = 2,
+      validation_split = 0.1)
+```
+
+```{r}
+model %>% 
+  evaluate(test_x, test_y)
+```
+
+
+## Predict using trained model
+
+```{r}
+predictions <- model %>% 
+  predict(test_x)
+
+predictions
+```
+
+
+
+## Evaluate and plot results
+
+```{r}
+forecast <- tibble(year = test$year,
+                   actual = test_y[,1],
+                   predicted = predictions) %>% 
+  as_tsibble(index=year)
+
+forecast
+```
+
+
+```{r}
+forecast %>% 
+  ggplot(aes(x = year)) +
+  geom_line(aes(y = actual, colour = "Actual")) +
+  geom_line(aes(y = predicted, colour = "Predicted"))
+```
+
+
+

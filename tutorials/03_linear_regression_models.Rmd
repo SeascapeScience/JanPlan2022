@@ -99,7 +99,7 @@ hab %>%
 
 
 
-
+## Compare all predictor variables 
 
 ```{r}
 hab %>% 
@@ -113,6 +113,7 @@ hab %>%
   ggcorr()
 ```
 
+## Fit the data to a linear regression model
 
 ```{r}
 fit_hab_i <- hab %>%
