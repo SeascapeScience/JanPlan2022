@@ -23,10 +23,10 @@ hab_w_predictors
 
 ```{r}
 train <- hab_w_predictors %>% 
-  filter(year < 2010)
+  filter(year < 2016)
 
 test <- hab_w_predictors %>% 
-  filter(year >= 2010)
+  filter(year >= 2016)
 
 
 ```
@@ -64,6 +64,11 @@ test_y <- test %>%
 ```
 
 
+
+```{r}
+
+```
+
 ## Build the model
 
 ```{r}
@@ -93,12 +98,16 @@ model %>%
 ## Fit the model to training data
 
 ```{r}
-model %>% 
+history <- model %>% 
   fit(x = train_x,
       y = train_y,
-      epochs = 15,
+      epochs = 100,
       batch_size = 2,
       validation_split = 0.1)
+```
+
+```{r}
+plot(history)
 ```
 
 ```{r}
@@ -134,7 +143,8 @@ forecast
 forecast %>% 
   ggplot(aes(x = year)) +
   geom_line(aes(y = actual, colour = "Actual")) +
-  geom_line(aes(y = predicted, colour = "Predicted"))
+  geom_line(aes(y = predicted, colour = "Predicted")) + 
+  geom_line(data=train, aes(x=year, y=hab_index_west))
 ```
 
 
